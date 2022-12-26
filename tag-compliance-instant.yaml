@@ -1,0 +1,12 @@
+policies:
+
+  - name: ec2-tag-compliance
+    resource: ec2
+    comment: |
+      Deletes EC2 instances without tags
+    filters:
+      - or:
+          - "tag:Owner": absent
+          - "tag:CostCenter": absent
+    actions:
+      - type: terminate

@@ -1,0 +1,10 @@
+policies:
+
+  - name: ec2-tag-compliance
+    resource: ec2
+    comment: |
+      Report on total count of non compliant instances
+    filters:
+      - or:
+          - "tag:Owner": absent
+          - "tag:CostCenter": absent

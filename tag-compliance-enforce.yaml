@@ -1,0 +1,79 @@
+
+policies:
+  - name: ec2-tag-compliance-mark
+    resource: ec2
+    comment: |
+      Find all (non-ASG) instances that are not conformant
+      to tagging policies, and tag them for stoppage in 1 days.
+    filters:
+      - "tag:c7n_status": absent
+      - or:
+          - "tag:Owner": absent
+          - "tag:CostCenter": absent
+    actions:
+      - type: mark-for-op
+        op: stop
+        days: 1
+
+  - name: ec2-tag-compliance-unmark
+    resource: ec2
+    comment: |
+      Any instances which have previously been marked as
+      non compliant with tag policies, that are now compliant
+      should be unmarked as non-compliant.
+    filters:
+      - "tag:Owner": not-null
+      - "tag:CostCenter": not-null
+      - "tag:c7n_status": not-null
+    actions:
+      - unmark
+      - start
+
+  - name: ec2-tag-compliance-stop
+    resource: ec2
+    comment: |
+      Stop all non autoscaling group instances previously marked
+      for stoppage by today's date, and schedule termination in
+      2 days. Also verify that they continue to not meet tagging
+      policies.
+    filters:
+      - type: marked-for-op
+        op: stop
+      - or:
+          - "tag:Owner": absent
+          - "tag:CostCenter": absent
+    actions:
+      - stop
+      - type: mark-for-op
+        op: terminate
+        days: 3
+
+  - name: ec2-tag-compliance-terminate
+    resource: ec2
+    comment: |
+      Terminate all stopped instances marked for termination
+      by today's date.
+    filters:
+      - type: marked-for-op
+        op: terminate
+      - or:
+          - "tag:Owner": absent
+          - "tag:CostCenter": absent
+    actions:
+      - type: terminate
+        force: true
+
+  - name: ec2-tag-compliance-nag-stop
+    resource: ec2
+    comment: |
+      Stop all instances marked for termination every hour
+      starting 1 day before their termination.
+    filters:
+      - type: marked-for-op
+        op: terminate
+        skew: 1
+      - or:
+          - "tag:CostCenter": absent
+          - "tag:Owner": absent
+    actions:
+      - stop
