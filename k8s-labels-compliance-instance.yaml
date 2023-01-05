@@ -1,0 +1,15 @@
+policies:
+
+  - name: k8s-labels-compliance
+    resource: k8s.pod
+    description: |
+      Deletes k8s Pods without labels
+    filters:
+      - type: value
+        key: metadata.labels.owner
+        value: absent
+      - type: value
+        key: metadata.namespace
+        value: production
+    actions:
+      - type: delete
